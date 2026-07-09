@@ -1,0 +1,12 @@
+# Ignore everything in the root directory
+/*
+
+# Except the main landing page files
+!/index.html
+!/app.js
+!/styles.css
+!/.gitignore
+!/assets/
+
+# Exclude heavy mov files inside assets
+/assets/*.mov
