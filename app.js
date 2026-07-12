@@ -54,6 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Start initial Act 1 guidance on load (triggers after 2s of inactivity)
+    setTimeout(() => {
+        triggerGuidance(1);
+    }, 100);
+
     // Audio Context for Ringtone/Beep Synthesis
     let audioCtx = null;
     let ringtoneInterval = null;
@@ -120,9 +125,164 @@ document.addEventListener('DOMContentLoaded', () => {
         ]}
     ];
 
+    // Temporized Guidance System
+    let guidanceTimers = {};
+    let activeGuidanceElements = [];
+
+    function clearAllGuidance() {
+        // Clear all timers
+        Object.keys(guidanceTimers).forEach(key => {
+            clearTimeout(guidanceTimers[key]);
+        });
+        guidanceTimers = {};
+
+        // Remove active elements
+        activeGuidanceElements.forEach(el => {
+            if (el && el.parentNode) {
+                el.parentNode.removeChild(el);
+            }
+        });
+        activeGuidanceElements = [];
+
+        // Remove button highlight classes
+        const btnEntrar = document.getElementById('btn-entrar');
+        if (btnEntrar) btnEntrar.classList.remove('sonar-active');
+
+        const btnContestar = document.getElementById('btn-contestar');
+        if (btnContestar) {
+            const circle = btnContestar.querySelector('.icon-circle');
+            if (circle) circle.classList.remove('sonar-active');
+        }
+
+        const btnLogin = document.getElementById('btn-login');
+        if (btnLogin) btnLogin.classList.remove('sonar-active');
+
+        // Remove highlight from chat play buttons
+        document.querySelectorAll('.voice-play-btn').forEach(btn => {
+            btn.classList.remove('play-btn-highlight');
+        });
+    }
+
+    function triggerGuidance(actNum, stepId = '') {
+        clearAllGuidance();
+        const timerKey = `${actNum}_${stepId}`;
+        guidanceTimers[timerKey] = setTimeout(() => {
+            showGuidance(actNum, stepId);
+        }, 2000); // 2 seconds delay
+    }
+
+    function showGuidance(actNum, stepId) {
+        const wrapper = document.querySelector('.mobile-wrapper');
+        if (!wrapper) return;
+
+        if (actNum === 1) {
+            const btn = document.getElementById('btn-entrar');
+            if (btn) {
+                btn.classList.add('sonar-active');
+                createFloatingGuide(btn, "Toca para iniciar con sonido 🔊", "above");
+            }
+        } else if (actNum === 2) {
+            const btn = document.getElementById('btn-contestar');
+            if (btn) {
+                const circle = btn.querySelector('.icon-circle');
+                if (circle) circle.classList.add('sonar-active');
+                createFloatingGuide(btn, "Toca aquí para contestar 📞", "above");
+            }
+        } else if (actNum === 4) {
+            const btn = document.getElementById('btn-login');
+            if (btn && document.getElementById('login-box').classList.contains('active')) {
+                btn.classList.add('sonar-active');
+                createFloatingGuide(btn, "Presiona para entrar 🔑", "above");
+            }
+        } else if (actNum === 6) {
+            const notif = document.getElementById('lockscreen-notif');
+            if (notif) {
+                createFloatingGuide(notif, "Toca la notificación de WhatsApp para abrir 💬", "middle");
+            }
+        } else if (actNum === 7) {
+            let targetBtn = null;
+            let msg = "Toca para escuchar 🎧";
+            let pos = "left";
+            if (stepId === 'audio1') {
+                targetBtn = document.getElementById('voice-play-btn-1');
+            } else if (stepId === 'audio2') {
+                targetBtn = document.getElementById('voice-play-btn-2');
+            } else if (stepId === 'audio3') {
+                targetBtn = document.getElementById('voice-play-btn-3');
+            } else if (stepId === 'videoCard') {
+                targetBtn = document.getElementById('chat-video-card-trigger');
+                msg = "Toca para ver el vídeo 🎬";
+                pos = "above";
+            } else if (stepId === 'whatsapp') {
+                targetBtn = document.getElementById('whatsapp-cta-link');
+                msg = "Agenda tu valoración aquí 🟢";
+                pos = "above";
+            }
+
+            if (targetBtn) {
+                if (stepId === 'videoCard' || stepId === 'whatsapp') {
+                    targetBtn.classList.add('play-btn-highlight');
+                    createFloatingGuide(targetBtn, msg, pos);
+                } else if (!targetBtn.querySelector('i').classList.contains('fa-pause')) {
+                    targetBtn.classList.add('play-btn-highlight');
+                    createFloatingGuide(targetBtn, msg, pos);
+                }
+            }
+        }
+    }
+
+    function createFloatingGuide(targetEl, text, position) {
+        if (!targetEl) return;
+        const rect = targetEl.getBoundingClientRect();
+        
+        // Find mobile wrapper relative offset
+        const wrapper = document.querySelector('.mobile-wrapper');
+        if (!wrapper) return;
+        const wrapperRect = wrapper.getBoundingClientRect();
+
+        const guide = document.createElement('div');
+        guide.className = 'guia-flotante show';
+        
+        if (position === 'above') {
+            guide.classList.add('bounce-down');
+        } else {
+            guide.classList.add('bounce-right');
+        }
+
+        guide.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> <span>${text}</span>`;
+        wrapper.appendChild(guide);
+
+        const elLeft = rect.left - wrapperRect.left;
+        const elTop = rect.top - wrapperRect.top;
+
+        if (position === 'above') {
+            guide.style.left = `${elLeft + (rect.width / 2) - 100}px`; // center (width is 200px)
+            guide.style.top = `${elTop - 45}px`;
+            guide.style.width = '200px';
+            guide.style.justifyContent = 'center';
+        } else if (position === 'left') {
+            guide.style.left = `${elLeft - 180}px`;
+            guide.style.top = `${elTop + (rect.height / 2) - 18}px`;
+            guide.style.width = '170px';
+        } else if (position === 'middle') {
+            guide.style.left = `${elLeft + (rect.width / 2) - 130}px`;
+            guide.style.top = `${elTop + (rect.height / 2) - 20}px`;
+            guide.style.width = '260px';
+            guide.style.justifyContent = 'center';
+            guide.style.background = 'rgba(22, 140, 126, 0.95)';
+            guide.style.borderColor = 'var(--phone-green)';
+        }
+
+        activeGuidanceElements.push(guide);
+    }
+
     // Helper: Transition between acts
     function transitionToAct(actNum) {
         console.log(`Transitioning to Act ${actNum}`);
+        
+        // Clear any active guidance when transitioning
+        clearAllGuidance();
+
         // Fade out active acts
         Object.keys(acts).forEach(num => {
             if (acts[num]) {
@@ -143,6 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function onActEnter(actNum) {
         if (actNum === 2) {
             startIncomingCallAudio();
+            triggerGuidance(2);
         } else if (actNum === 3) {
             stopIncomingCallAudio();
             playConfrontationVideo();
@@ -159,6 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (actNum === 6) {
             // Act 6: iPhone Lockscreen Notification
             updateLockscreenTime();
+            triggerGuidance(6);
             
             // Fade out the background music (Prism_Breath.mp3) smoothly when the lockscreen opens
             const loginBgAudio = document.getElementById('audio-login-bg');
@@ -192,6 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (actNum === 7) {
             // Act 7: Voice Chat Screen
             resetContactStatus();
+            triggerGuidance(7, 'audio1');
         }
     }
 
@@ -322,6 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Act 1 Event
     btnEntrar.addEventListener('click', () => {
+        clearAllGuidance();
         // Stop the intro suspense music immediately to prevent clashing with Act 2 ringtone
         const introAudio = document.getElementById('audio-intro-suspense');
         if (introAudio) {
@@ -335,6 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Act 2 Event
     btnContestar.addEventListener('click', () => {
+        clearAllGuidance();
         transitionToAct(3);
     });
 
@@ -483,6 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     chatBox.classList.remove('active');
                     loginBox.classList.add('active');
+                    triggerGuidance(4); // Show guidance to click INICIAR SESIÓN
                 }, 4000);
             }
         }
@@ -492,14 +658,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Toggle password visibility
     togglePassword.addEventListener('click', () => {
+        clearAllGuidance();
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
         passwordInput.setAttribute('type', type);
         togglePassword.classList.toggle('fa-eye');
         togglePassword.classList.toggle('fa-eye-slash');
     });
 
+    // Clear guidance on focus/input
+    [usernameInput, passwordInput].forEach(input => {
+        if (input) {
+            input.addEventListener('focus', clearAllGuidance);
+            input.addEventListener('input', clearAllGuidance);
+        }
+    });
+
     // Login Form Validation
     btnLogin.addEventListener('click', () => {
+        clearAllGuidance();
         const userVal = usernameInput.value.trim();
         const passVal = passwordInput.value.trim();
 
@@ -622,6 +798,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const notifZone = document.getElementById('lockscreen-notif');
     if (notifZone) {
         notifZone.addEventListener('click', () => {
+            clearAllGuidance();
             playWhatsAppPlaySound();
             
             // Auto transition to Act 7 (WhatsApp Chat screen) after a short tap sound delay
@@ -797,6 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!audio || !playBtn || !playIcon) return;
         
         playBtn.addEventListener('click', () => {
+            clearAllGuidance();
             // Stop other playing audios
             [audio1, audio2, audio3].forEach(a => {
                 if (a !== audio && a && !a.paused) {
@@ -852,6 +1030,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (videoBubble && videoBubble.classList.contains('hidden')) {
                 showTypingAndReveal("grabando video...", 1600, () => {
                     videoBubble.classList.remove('hidden');
+                    triggerGuidance(7, 'videoCard'); // Show guide to click the video card
                 });
             }
         });
@@ -860,6 +1039,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Click video card thumbnail -> Fullscreen modal play
     if (videoCardTrigger && videoOverlayModal && modalVideoPlayer) {
         videoCardTrigger.addEventListener('click', () => {
+            clearAllGuidance();
             // Stop any active audios
             [audio1, audio2, audio3].forEach(a => {
                 if (a && !a.paused) a.pause();
@@ -875,6 +1055,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Close Modal handler
         function closeVideoModal() {
+            clearAllGuidance();
             modalVideoPlayer.pause();
             videoOverlayModal.classList.add('hidden');
             
@@ -882,6 +1063,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (bubble2 && bubble2.classList.contains('hidden')) {
                 showTypingAndReveal("grabando audio...", 2000, () => {
                     bubble2.classList.remove('hidden');
+                    triggerGuidance(7, 'audio2'); // Guide to click audio 2
                 });
             }
         }
@@ -896,6 +1078,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (bubble3 && bubble3.classList.contains('hidden')) {
                 showTypingAndReveal("grabando audio...", 2000, () => {
                     bubble3.classList.remove('hidden');
+                    triggerGuidance(7, 'audio3'); // Guide to click audio 3
                 });
             }
         });
@@ -907,14 +1090,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ctaCard && ctaCard.classList.contains('hidden')) {
                 showTypingAndReveal("escribiendo...", 1200, () => {
                     ctaCard.classList.remove('hidden');
+                    triggerGuidance(7, 'whatsapp'); // Guide to click WhatsApp
                 });
             }
         });
     }
 
+    // Clear guidance on clicking the WhatsApp link
+    const whatsappBtn = document.getElementById('whatsapp-cta-link');
+    if (whatsappBtn) {
+        whatsappBtn.addEventListener('click', clearAllGuidance);
+    }
+
     // Chat back button navigation
     if (voiceChatBackBtn) {
         voiceChatBackBtn.addEventListener('click', () => {
+            clearAllGuidance();
             [audio1, audio2, audio3].forEach(a => {
                 if (a) {
                     a.pause();

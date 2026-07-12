@@ -1582,3 +1582,86 @@ body::before {
 .patient-chat-bubble .read-check {
     color: #4fc3f7; /* Cyan checkmarks for read status */
 }
+
+/* Sonar Pulse Radar Effect for main button */
+@keyframes sonarPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(183, 230, 224, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(183, 230, 224, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(183, 230, 224, 0);
+    }
+}
+
+.sonar-active {
+    animation: sonarPulse 1.8s infinite ease-in-out !important;
+}
+
+/* Floating Guidance Indicators */
+.guia-flotante {
+    position: absolute;
+    background: rgba(19, 23, 28, 0.95);
+    border: 1.5px solid var(--accent-gold);
+    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+    color: #fff;
+    font-size: 0.72rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.25);
+    z-index: 150;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.guia-flotante.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.guia-flotante.bounce-down {
+    animation: arrowBounceDown 1.2s infinite alternate ease-in-out;
+}
+
+.guia-flotante.bounce-right {
+    animation: arrowBounceRight 1.2s infinite alternate ease-in-out;
+}
+
+.guia-flotante i {
+    color: var(--accent-gold);
+    font-size: 0.8rem;
+}
+
+@keyframes arrowBounceDown {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-6px); }
+}
+
+@keyframes arrowBounceRight {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-6px); }
+}
+
+/* Audio button highlight */
+.play-btn-highlight {
+    animation: audioHighlight 1.5s infinite ease-in-out !important;
+}
+
+@keyframes audioHighlight {
+    0%, 100% {
+        border-color: rgba(183, 230, 224, 0.4) !important;
+        box-shadow: 0 0 5px rgba(183, 230, 224, 0.2) !important;
+    }
+    50% {
+        border-color: var(--accent-gold) !important;
+        box-shadow: 0 0 12px rgba(212, 175, 55, 0.5) !important;
+    }
+}
