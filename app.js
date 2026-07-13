@@ -30,33 +30,45 @@ document.addEventListener('DOMContentLoaded', () => {
         const introAudio = document.getElementById('audio-intro-suspense');
         const evoAudio = document.getElementById('audio-doctor-evolution');
         
-        let playPromises = [];
+        let introPlayed = false;
+        let evoPlayed = false;
+
         if (introAudio && introAudio.paused) {
             introAudio.volume = 0.45;
-            playPromises.push(introAudio.play());
-        }
-        if (evoAudio && evoAudio.paused) {
-            evoAudio.volume = 1.0;
-            playPromises.push(evoAudio.play());
+            introAudio.play()
+                .then(() => { 
+                    introPlayed = true; 
+                    checkCleanup(); 
+                })
+                .catch(e => console.log("Intro audio deferred:", e));
+        } else {
+            introPlayed = true;
         }
 
-        if (playPromises.length > 0) {
-            Promise.all(playPromises)
-                .then(() => {
-                    console.log("Act 1 audio streams playing successfully.");
-                    // Clean up all triggers ONLY when audio successfully starts playing
-                    ['click', 'touchstart', 'mousedown', 'keydown', 'pointerdown'].forEach(evt => {
-                        document.removeEventListener(evt, forceMobileVideoAutoplay);
-                        window.removeEventListener(evt, forceMobileVideoAutoplay);
-                        const wrapper = document.getElementById('acto-1');
-                        if (wrapper) {
-                            wrapper.removeEventListener(evt, forceMobileVideoAutoplay);
-                        }
-                    });
+        if (evoAudio && evoAudio.paused) {
+            evoAudio.volume = 1.0;
+            evoAudio.play()
+                .then(() => { 
+                    evoPlayed = true; 
+                    checkCleanup(); 
                 })
-                .catch(e => {
-                    console.log("Audio play deferred (user gesture required):", e);
+                .catch(e => console.log("Evo audio deferred:", e));
+        } else {
+            evoPlayed = true;
+        }
+
+        function checkCleanup() {
+            if (introPlayed || evoPlayed) {
+                // Clean up triggers if at least one audio started playing
+                ['click', 'touchstart', 'mousedown', 'keydown', 'pointerdown'].forEach(evt => {
+                    document.removeEventListener(evt, forceMobileVideoAutoplay);
+                    window.removeEventListener(evt, forceMobileVideoAutoplay);
+                    const wrapper = document.getElementById('acto-1');
+                    if (wrapper) {
+                        wrapper.removeEventListener(evt, forceMobileVideoAutoplay);
+                    }
                 });
+            }
         }
     };
     
