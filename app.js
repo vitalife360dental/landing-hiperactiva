@@ -8,9 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
             bg.play().catch(e => console.log("Immediate video autoplay blocked, waiting for touch:", e));
         }
         const introAudio = document.getElementById('audio-intro-suspense');
+        const evoAudio = document.getElementById('audio-doctor-evolution');
         if (introAudio) {
-            introAudio.volume = 0.55;
+            introAudio.volume = 0.45; // Soft music in background
             introAudio.play().catch(e => console.log("Immediate audio autoplay blocked, waiting for touch:", e));
+        }
+        if (evoAudio) {
+            evoAudio.volume = 1.0; // Full voice volume
+            evoAudio.play().catch(e => console.log("Immediate voice autoplay blocked:", e));
         }
     };
     initAutoplayOnLoad();
@@ -23,11 +28,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const introAudio = document.getElementById('audio-intro-suspense');
+        const evoAudio = document.getElementById('audio-doctor-evolution');
+        
+        let playPromises = [];
         if (introAudio && introAudio.paused) {
-            introAudio.volume = 0.55;
-            introAudio.play()
+            introAudio.volume = 0.45;
+            playPromises.push(introAudio.play());
+        }
+        if (evoAudio && evoAudio.paused) {
+            evoAudio.volume = 1.0;
+            playPromises.push(evoAudio.play());
+        }
+
+        if (playPromises.length > 0) {
+            Promise.all(playPromises)
                 .then(() => {
-                    console.log("Suspense music playing successfully.");
+                    console.log("Act 1 audio streams playing successfully.");
                     // Clean up all triggers ONLY when audio successfully starts playing
                     ['click', 'touchstart', 'mousedown', 'keydown', 'pointerdown'].forEach(evt => {
                         document.removeEventListener(evt, forceMobileVideoAutoplay);
@@ -491,6 +507,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (introAudio) {
             introAudio.pause();
             introAudio.currentTime = 0;
+        }
+        // Stop the doctor evolution speech
+        const evoAudio = document.getElementById('audio-doctor-evolution');
+        if (evoAudio) {
+            evoAudio.pause();
+            evoAudio.currentTime = 0;
         }
         
         playHookTransitionSound();
